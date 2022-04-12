@@ -1,0 +1,257 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+
+
+
+<button type="button" id="btn" class="btn btn-default">Load List</button>
+
+<button class="btn btn-default">
+    @Html.ActionLink("Create New Product", "Create")
+</button>
+
+
+
+
+<table id="example" class="table table-responsive table-bordered" style="width:100%">
+    <thead>
+        <tr>
+            <th scope="col">Id</th>
+            <th scope="col">External_Id</th>
+            <th scope="col">Code</th>
+            <th scope="col">Name</th>
+            <th scope="col">Description</th>
+            <th scope="col">Barcode</th>
+            <th scope="col">Retail Price</th>
+            <th scope="col">Wholesale Price</th>
+            <th scope="col">Discount</th>
+            <th scope="col">Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+    </tbody>
+</table>
+
+
+
+
+
+
+
+@section scripts {
+
+
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+
+
+
+    <script type="text/javascript">
+
+
+
+
+        // στο κουμπί με το καλεί την LoadData η οποία κάνει την κλήση στο url
+
+       
+        
+        $("#btn").one('click',function (e) {
+          
+            e.preventDefault();       
+            LoadData();
+
+
+        });
+
+
+       
+
+
+        function LoadData() {
+
+           
+
+            var settings = {
+               "url": "/api/productsapi/",
+                "method": "GET",
+                "timeout": 0,
+                "headers": {
+                    "Access-Control-Allow-Origin": "*"
+                },
+            }
+
+
+            $.ajax(settings).done(function (response) {
+
+                console.log(response);
+
+                LoadProducts();
+
+                function LoadProducts() {
+
+                    let products = response.products;
+
+                  
+
+                    for (let product of products) {
+                       
+                        let template = `
+
+                                        <tr id="${product.Id}">
+                                            <td>${product.Id}</td>
+                                            <td class="external">${product.externalId}</td>
+                                            <td  class="code">${product.code}</td>
+                                            <td class="name">${product.name}</td>
+                                            <td class="desc">${product.description}</td>
+                                            <td class="barcode">${product.barcode}</td>
+                                            <td class="retail">${product.retailPrice}</td>
+                                            <td class="wholesale">${product.wholesalePrice}</td>
+                                            <td class="discount">${product.discount}</td>
+                                            <td style="display: flex;flex-direction: column;">
+                                                   <button  class="btn btn-success edit-btn" >Edit</button>
+                                                   <button  class="btn btn-danger  delete-btn" >Delete</button>
+                                             </td>
+                                        </tr>
+                                        `
+
+
+                        let element = $(template);
+
+                        element.find(".edit-btn").click(EditRow);
+                        element.find(".delete-btn").click(DeleteRow);
+
+                       
+
+                        $("tbody").append(element);
+
+                        
+                    };
+
+                }
+
+            });
+        }
+
+
+        //delete
+
+        function DeleteRow() {
+
+
+            // βρίσκουμε την εκάστοτε γραμμή που θέλουμε να διαγράψουμε
+            let rowId = $(this).parent().parent().attr("id");
+
+            var settings = {
+                "url": "/api/productsapi?id=" + rowId,
+                "method": "DELETE",
+                "timeout": 0,
+            };
+
+            $.ajax(settings).done(function (response) {
+                console.log(response);
+                let product = response;
+
+                let query = "#" + product.Id;
+                $(query).remove();
+
+            });
+
+
+
+        }
+
+
+        function EditRow() {
+
+
+            //  κρατάμε σε  μεταβλητές τα πεδία που θέλουμε να τροποποιήσουμε
+
+            let external = $(this).parent().siblings(".external").text();
+            let code = $(this).parent().siblings(".code").text();
+            let name = $(this).parent().siblings(".name").text();
+            let desc = $(this).parent().siblings(".desc").text();
+            let barcode = $(this).parent().siblings(".barcode").text();
+            let retail = $(this).parent().siblings(".retail").text();
+            let wholesale = $(this).parent().siblings(".wholesale").text();
+            let discount = $(this).parent().siblings(".discount").text();
+
+
+            //  Τσεκάρουμε  το button σε ποια κατάσταση είναι και αναλόγως κάνουμε Editable το περιεχόμενο του.
+
+
+            if ($(this).text() == "Edit") {
+
+                $(this).text("Save");
+
+
+                $(this).parent().siblings(".external").prop("contentEditable", true);
+                $(this).parent().siblings(".code").prop("contentEditable", true);
+                $(this).parent().siblings(".name").prop("contentEditable", true);
+                $(this).parent().siblings(".desc").prop("contentEditable", true);
+                $(this).parent().siblings(".barcode").prop("contentEditable", true);
+                $(this).parent().siblings(".retail").prop("contentEditable", true);
+                $(this).parent().siblings(".wholesale").prop("contentEditable", true);
+                $(this).parent().siblings(".discount").prop("contentEditable", true);
+
+
+            }
+            else {
+
+                $(this).text("Edit");
+
+                $(this).parent().siblings(".external").prop("contentEditable", false);
+                $(this).parent().siblings(".code").prop("contentEditable", false);
+                $(this).parent().siblings(".name").prop("contentEditable", false);
+                $(this).parent().siblings(".desc").prop("contentEditable", false);
+                $(this).parent().siblings(".barcode").prop("contentEditable", false);
+                $(this).parent().siblings(".retail").prop("contentEditable", false);
+                $(this).parent().siblings(".wholesale").prop("contentEditable", false);
+                $(this).parent().siblings(".discount").prop("contentEditable", false);
+
+                ///////////    START AJAX PUT ///////////
+
+                // βρίσκουμε την εκάστοτε γραμμή που θέλουμε να τροποποιήσουμε
+                let rowId = $(this).parent().parent().attr("id");
+
+                var settings = {
+                    "url": "/api/productsapi?id=" + rowId,
+                    "method": "PUT",
+                    "timeout": 0,
+                    "headers": {
+                        "Content-Type": "application/json"
+                    },
+                    "data": JSON.stringify({
+                        "Id": rowId,
+                        "externalId": external,
+                        "code": code,
+                        "description": desc,
+                        "name": name,
+                        "barcode": barcode,
+                        "retailPrice": retail,
+                        "wholesalePrice": wholesale,
+                        "discount": discount
+                    }),
+                };
+
+                $.ajax(settings).done(function (response) {
+                    console.log(response);
+                });
+
+
+
+                ////////// END AJAX PUT //////////
+
+
+            }
+
+        }
+
+    </script>
+
+
+
+}
